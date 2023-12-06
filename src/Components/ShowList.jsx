@@ -1,122 +1,221 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import Fuse from 'fuse.js';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * Array containing different podcast genres.
+ * @type {string[]}
+ */
 const genresArray = [
-    "All",
-    "Personal Growth",
-    "True Crime and Investigative Journalism",
-    "History",
-    "Comedy",
-    "Entertainment",
-    "Business",
-    "Fiction",
-    "News",
-    "Kids and Family",
+  "All",
+  "Personal Growth",
+  "True Crime and Investigative Journalism",
+  "History",
+  "Comedy",
+  "Entertainment",
+  "Business",
+  "Fiction",
+  "News",
+  "Kids and Family",
 ];
 
-function ShowList(){
+/**
+ * Functional component representing the list of podcast shows.
+ * @component
+ * @returns {JSX.Element} JSX representation of the component.
+ */
+function ShowList() {
 
-    const navigate = useNavigate();
-    const [shows, setShows] = useState([]);
-    const [filteredShows, setFilteredShows] = useState([]);
-    const [sortOption, setSortOption] = useState('');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedGenre, setSelectedGenre] = useState('All');
+  /**
+   * React Router's navigate function for programmatic navigation.
+   * @type {function}
+   */
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        try {
-            fetch('https://podcast-api.netlify.app/shows')
-            .then(response => response.json())
-            .then(data => setShows(data))
-        } catch (error) {
-            console.error(error)
-        }
-    }, []);
+  /**
+   * State hook to manage the list of all shows.
+   * @type {[Object[], function]}
+   */
+  const [shows, setShows] = useState([]);
 
-    useEffect(() => {
-        const filteredByGenre = selectedGenre === 'All' ? shows : shows.filter(show => show.genres.includes(genresArray.indexOf(selectedGenre)));
-        
-        const fuse = new Fuse(filteredByGenre, { keys: ['title'] });
-        const fuzzyFiltered = searchTerm ? fuse.search(searchTerm) : filteredByGenre;
-    
-        const sorted = fuzzyFiltered.sort((a, b) => {
-          switch (sortOption) {
-            case 'A-Z':
-              return a.title.localeCompare(b.title);
-            case 'Z-A':
-              return b.title.localeCompare(a.title);
-            case 'Ascending':
-              return new Date(a.updated) - new Date(b.updated);
-            case 'Descending':
-              return new Date(b.updated) - new Date(a.updated);
-            default:
-              return 0;
-          }
-        });
-    
-        setFilteredShows(sorted);
-      }, [shows, selectedGenre, searchTerm, sortOption]);
-    
-      const handleSortChange = (event) => {
-        setSortOption(event.target.value);
-      };
-    
-      const handleSearchChange = (event) => {
-        setSearchTerm(event.target.value);
-      };
-    
-      const handleGenreChange = (event) => {
-        setSelectedGenre(event.target.value);
-      };
+  /**
+   * State hook to manage the list of shows after filtering.
+   * @type {[Object[], function]}
+   */
+  const [filteredShows, setFilteredShows] = useState([]);
 
-    const top = {
-        backgroundColor: '#161010',
-        width: '100%',
-        padding: '10px',
-        position: 'sticky',
-        top: '0',
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between'
+  /**
+   * State hook to manage the selected sorting option.
+   * @type {[string, function]}
+   */
+  const [sortOption, setSortOption] = useState('');
+
+  /**
+   * State hook to manage the search term for filtering shows.
+   * @type {[string, function]}
+   */
+  const [searchTerm, setSearchTerm] = useState('');
+
+  /**
+   * State hook to manage the selected genre for filtering shows.
+   * @type {[string, function]}
+   */
+  const [selectedGenre, setSelectedGenre] = useState('All');
+
+  /**
+   * Fetches the list of shows from the API when the component mounts.
+   * @function
+   * @returns {void}
+   */
+  useEffect(() => {
+    try {
+      fetch('https://podcast-api.netlify.app/shows')
+        .then(response => response.json())
+        .then(data => setShows(data))
+    } catch (error) {
+      console.error(error)
     }
-    const displayStyles = {
-        display: 'flex',
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-    }
-    const buttonStyle = {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        width: '250px',
-        height: '350px',
-        margin: '10px',
-        border: '2.5px solid white',
-        borderRadius: '8px',
-        cursor: 'pointer',
-      };
-      const imageStyle = {
-        marginBottom: '1px',
-        borderRadius: '4px',
-        width: '240px',
-        height: '200px'
-      };
+  }, []);
 
-      const titleStyle = {
-        maxWidth: '240px',
+  /**
+   * Handles filtering, searching, and sorting of the shows.
+   * @function
+   * @returns {void}
+   */
+  useEffect(() => {
+    const filteredByGenre = selectedGenre === 'All' ? shows : shows.filter(show => show.genres.includes(genresArray.indexOf(selectedGenre)));
+
+    const fuse = new Fuse(filteredByGenre, { keys: ['title'] });
+    const fuzzyFiltered = searchTerm ? fuse.search(searchTerm) : filteredByGenre;
+
+    const sorted = fuzzyFiltered.sort((a, b) => {
+      switch (sortOption) {
+        case 'A-Z':
+          return a.title.localeCompare(b.title);
+        case 'Z-A':
+          return b.title.localeCompare(a.title);
+        case 'Ascending':
+          return new Date(a.updated) - new Date(b.updated);
+        case 'Descending':
+          return new Date(b.updated) - new Date(a.updated);
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredShows(sorted);
+  }, [shows, selectedGenre, searchTerm, sortOption]);
+
+  /**
+   * Handles the change of sorting option.
+   * @function
+   * @param {Object} event - The event object.
+   * @returns {void}
+   */
+  const handleSortChange = (event) => {
+    setSortOption(event.target.value);
+  };
+
+  /**
+   * Handles the change of search term.
+   * @function
+   * @param {Object} event - The event object.
+   * @returns {void}
+   */
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  /**
+   * Handles the change of selected genre.
+   * @function
+   * @param {Object} event - The event object.
+   * @returns {void}
+   */
+  const handleGenreChange = (event) => {
+    setSelectedGenre(event.target.value);
+  };
+
+  /**
+   * Styles for the top header section.
+   * @type {Object}
+   */
+  const top = {
+    backgroundColor: '#ec6ead',
+    width: '100%',
+    padding: '10px',
+    position: 'sticky',
+    top: '0',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  };
+
+  /**
+   * Styles for the main display section.
+   * @type {Object}
+   */
+  const displayStyles = {
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    backgroundColor: 'linear-gradient(to right, #'
+  };
+
+  /**
+   * Styles for each show button.
+   * @type {Object}
+   */
+  const buttonStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: '250px',
+    height: '350px',
+    margin: '10px',
+    border: '2.5px solid white',
+    borderRadius: '8px',
+    cursor: 'pointer',
+  };
+
+  /**
+   * Styles for show image.
+   * @type {Object}
+   */
+  const imageStyle = {
+    marginBottom: '1px',
+    borderRadius: '4px',
+    width: '240px',
+    height: '200px'
+  };
+
+  /**
+   * Styles for show title.
+   * @type {Object}
+   */
+  const titleStyle = {
+    maxWidth: '240px',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         marginBottom: '1px',
       }
 
+  /**
+   * Styles for additional paragraphs.
+   * @type {Object}
+   */
       const pStyle = {
         margin: '1px',
         padding: '0'
       }
 
+
+  /**
+   * Styles for the filter section.
+   * @type {Object}
+   */
       const filters = {
         display: 'flex',
         flexDirection: 'row',
@@ -125,12 +224,24 @@ function ShowList(){
         margin: '1rem',
       }
 
+    /**
+    * Styles for the "Favorites" button.
+    * @type {Object}
+    */
       const favs = {
         cursor: 'pointer',
         marginRight: '50px',
-        padding: '5px'
+        padding: '5px',
+        borderRadius: '5px',
       }
 
+
+    /**
+    * Formats the input date string to a readable date format.
+    * @function
+    * @param {string} inputDateString - The input date string.
+    * @returns {string} The formatted date string (MM/DD/YYYY).
+    */
       function formatDate(inputDateString) {
         const dateObject = new Date(inputDateString);
         const day = dateObject.getDate().toString().padStart(2, '0');
@@ -139,15 +250,31 @@ function ShowList(){
         const formattedDate = `${month}/${day}/${year}`;
         return formattedDate;
       }
+
+  /**
+   * Maps an array of genre indexes to their corresponding genre strings.
+   * @function
+   * @param {number[]} genreIndexes - Array of genre indexes.
+   * @returns {string[]} Array of genre strings.
+   */    
       function mapGenreIndexesToStrings(genreIndexes) {
         return genreIndexes.map(index => genresArray[index]);
       }
 
+   /**
+   * Handles navigation to the detailed show preview page.
+   * @function
+   * @param {number} id - The unique identifier of the show.
+   * @returns {void}
+   */
       function handleShow(id) {
         navigate(`/showpreview/${id}`)
       }
 
-    //console.log(shows)
+   /**
+   * JSX representation of the ShowList component.
+   * @returns {JSX.Element} JSX representation of the component.
+   */
     return (
         <div style={{backgroundColor: 'black', width: '100%'}}>
         <div style={top}>

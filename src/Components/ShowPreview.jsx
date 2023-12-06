@@ -1,6 +1,12 @@
 import React, {useState, useEffect} from 'react';
 import {useParams} from 'react-router-dom';
 
+
+/**
+ * React state management object
+ * @component
+ * @returns {JSX.Element} JSX representation of the ShowPreview component.
+ */
 function ShowPreview() {
     const {id} = useParams();
     const [showPreview, setShowPreview] = useState([]);
@@ -9,6 +15,13 @@ function ShowPreview() {
     const [currentTime, setCurrentTime] = useState(0);
     const [favorites, setFavorites] = useState([]);
 
+/**
+ * Fetches detailed information about the podcast show based on the provided ID.
+ * @function
+ * @async
+ * @param {string} id - The unique identifier of the podcast show.
+ * @returns {Promise<void>} A Promise that resolves after fetching and updating the showPreview state.
+ */
     useEffect(()=>{
         try {
             fetch(`https://podcast-api.netlify.app/id/${id}`)
@@ -19,6 +32,12 @@ function ShowPreview() {
         }
     },[id]);
 
+/**
+ * Retrieves the list of episodes for the selected season.
+ * @function
+ * @param {number} season - The selected season.
+ * @returns {Object[]} An array of episodes for the selected season.
+ */    
   const getEpisodesBySeason = season => {
     if (!showPreview.seasons) {
       return [];
@@ -29,10 +48,21 @@ function ShowPreview() {
     return selectedSeasonData ? selectedSeasonData.episodes : [];
   };
 
+/**
+ * Handles the selection of a different season.
+ * @function
+ * @param {number} season - The selected season.
+ * @returns {void}
+ */
   const handleSeasonSelect = season => {
     setSelectedSeason(season);
   };
 
+/**
+ * Updates the progress bar and current time as the audio plays.
+ * @function
+ * @returns {void}
+ */
    const handleTimeUpdate = () => {
     const progressBar = document.getElementById('progress-bar');
     if (progressBar && audioRef) {
@@ -42,6 +72,11 @@ function ShowPreview() {
     }
   };
 
+/**
+ * Handles the play/pause functionality of the audio player.
+ * @function
+ * @returns {void}
+ */  
   const handlePlayPause = () => {
     if (audioRef) {
       if (audioRef.paused) {
@@ -51,6 +86,13 @@ function ShowPreview() {
       }
     }
   };
+
+/**
+ * Adds the selected episode to the list of favorites.
+ * @function
+ * @param {Object} episode - The selected episode.
+ * @returns {void}
+ */
   const handleAddToFavorites = (episode) => {
     setFavorites((prevFavorites) => {
       const existingShow = prevFavorites.find(
@@ -73,6 +115,12 @@ function ShowPreview() {
     });
   };
 
+  /**
+   * Formats the given time in seconds to a readable time format (MM:SS).
+   * @function
+   * @param {number} seconds - The time in seconds.
+   * @returns {string} The formatted time string.
+   */
   const formatTime = seconds => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
@@ -82,7 +130,7 @@ function ShowPreview() {
     return formattedTime;
   };
 
-  console.log(favorites)
+/* styling of components*/
 
   const image = {
     width: '300px',
@@ -132,6 +180,7 @@ function ShowPreview() {
     width: '100%',
     height: '10px',
     backgroundColor: '#ddd',
+
   }
   const progressBar = {
     height: '100%',
@@ -152,6 +201,8 @@ function ShowPreview() {
     cursor: 'pointer',
     fontSize: '15px'
  }
+
+
   return (
     <div>
         <div style={heading}>

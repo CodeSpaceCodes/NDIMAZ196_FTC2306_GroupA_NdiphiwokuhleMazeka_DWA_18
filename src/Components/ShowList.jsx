@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Fuse from 'fuse.js';
 import { useNavigate } from 'react-router-dom';
+import Loading from './Loading';
+import Carousel from './Carousel'
 
 /**
  * Array containing different podcast genres.
@@ -148,7 +150,8 @@ function ShowList() {
     top: '0',
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    zIndex: '1000'
   };
 
   /**
@@ -281,6 +284,7 @@ function ShowList() {
             <h2>Podcast App</h2>
             <button style={favs} onClick={()=> navigate('/favorites')}>Favorites</button>
         </div>
+        < Carousel />
         <div style={filters}>
         <label>
           Sort By:
@@ -328,4 +332,4 @@ function ShowList() {
         </div>
     )
 }
-export default ShowList;
+export default Loading(ShowList);

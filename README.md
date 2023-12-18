@@ -1,46 +1,8 @@
-# Podcast App
+# React + Vite
 
-## Introduction
-This project is a podcast app that allows users to browse various podcast shows, play episodes, and track their favorite episodes.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-### The project involves three basic semantic units:
+Currently, two official plugins are available:
 
-- Episode: Corresponds to a specific MP3 file that a user can listen to.
-- Season: A collection of episodes released across a specific timespan.
-- Show: A specific podcast that contains one or several seasons.
-
-## Technology
-- React.js + Vite
-- VSC IDE
-
-## Endpoints
-
-### Data can be fetched via two endpoints:
-
--    https://podcast-api.netlify.app/shows: Returns an array of preview objects.
--    https://podcast-api.netlify.app/id/<ID>: Returns a single show object with embedded season and episode objects.
-
-### Relationships
-
-- The data used in this project is related:
-
-    One or more episodes make up a season.
-    One or more seasons make up a show.
-    Shows and previews are different forms of the same data.
-    Shows and previews both have a genre property.
-
-## User Stories
-
-### The project aims to meets the following requirements:
-
--    Deployed to a custom Netlify URL.
-     Responsive design for all views, verified on the smallest mobile device.
-     Favicon and metatag information added correctly.
-     Various functionalities related to browsing shows, viewing details, listening to episodes, and managing favorites.
-
--    Additional Features
-
-     User authentication via Supabase.
-     Storage of user favorites in the Supabase database.
-     Automatic syncing of user favorites when logged in, ensuring consistency between devices.
-     Ability for users to share their favorites via a publicly accessible URL.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh

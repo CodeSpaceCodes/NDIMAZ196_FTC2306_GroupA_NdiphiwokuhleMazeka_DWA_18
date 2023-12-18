@@ -1,5 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import {useParams} from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
+
+import Loading from './Loading'
 
 
 /**
@@ -94,25 +97,41 @@ function ShowPreview() {
  * @returns {void}
  */
   const handleAddToFavorites = (episode) => {
-    setFavorites((prevFavorites) => {
-      const existingShow = prevFavorites.find(
-        (fav) => fav.showId === showPreview.id
-      );
+    const formattedTime = new Date().toLocaleString();
+    const newFavorite = {
+      key: uuidv4(),
+      season: selectedSeason,
+      episodeNumber: episode.episode,
+      showName: showPreview.title,
+      showUpdatedDate: showPreview.updated,
+      timeAdded: formattedTime,
+      isFavorite: true, // Add this property
+      ...episode,
+    };
+  
+    // setFavorites((prevFavorites) => [...prevFavorites, newFavorite]);
+  
+    // localStorage.setItem('favorites', JSON.stringify([...favorites, newFavorite]));
+      // Retrieve existing favorites from local storage
+  const storedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
-      if (existingShow) {
-        existingShow.episodes.push(episode);
-        return [...prevFavorites];
-      } else {
-        return [
-          ...prevFavorites,
-          {
-            showId: showPreview.id,
-            showTitle: showPreview.title,
-            episodes: [episode],
-          },
-        ];
-      }
-    });
+  // Check if the episode key already exists in favorites
+  const existingFavoriteIndex = storedFavorites.findIndex(
+    (fav) => fav.key === newFavorite.key
+  );
+
+  // If the episode key already exists, replace it; otherwise, add the new favorite
+  if (existingFavoriteIndex !== -1) {
+    storedFavorites[existingFavoriteIndex] = newFavorite;
+  } else {
+    storedFavorites.push(newFavorite);
+  }
+
+  // Update local storage with the modified list of favorites
+  localStorage.setItem('favorites', JSON.stringify(storedFavorites));
+
+  // Update the state with the modified list of favorites
+  setFavorites(storedFavorites);
   };
 
   /**
@@ -235,18 +254,27 @@ function ShowPreview() {
             </div>
             <div style={episodeStyles}>
                 {getEpisodesBySeason(selectedSeason).map(episode => (
-                 <div key={episode.title} style={episodeItem}>
+                 <div key={uuidv4()} style={episodeItem}>
                     <div style={favorite}>
                     <h3>Episode {episode.episode}: {episode.title}</h3>
-                    <button
+                    {/* <button
                     style={favButton}
                     onClick={() => handleAddToFavorites(episode)}
                     >
                     Add To Favorites
+                    </button> */}
+                    <button
+                      style={{
+                        ...favButton,
+                        backgroundColor: episode.isFavorite ? 'red' : 'initial',
+                      }}
+                      onClick={() => handleAddToFavorites(episode)}
+                    >
+                      {episode.isFavorite ? 'Added to Favorites' : 'Add to Favorites'}
                     </button>
                     </div>
                  <p>{episode.description}</p>
-                 <audio
+                 {/* <audio
                     ref={ref => setAudioRef(ref)}
                     src={episode.file}
                     onTimeUpdate={handleTimeUpdate}
@@ -257,7 +285,7 @@ function ShowPreview() {
                         progressBar.style.width = '0%';
                         }
                     }}
-                    ></audio>
+                    ></audio> */}
                  <div>
                    <button onClick={() => handlePlayPause()}>
                      {audioRef && !audioRef.paused ? 'Pause' : 'Play'}
@@ -282,4 +310,4 @@ function ShowPreview() {
   );
     
 }
-export default ShowPreview;
+export default Loading(ShowPreview);

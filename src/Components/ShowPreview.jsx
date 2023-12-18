@@ -1,101 +1,60 @@
-import React, {useState, useEffect} from 'react';
-import {useParams} from 'react-router-dom';
+import React, { useRef, useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import Loading from './Loading';
 
-import Loading from './Loading'
-
-
-/**
- * React state management object
- * @component
- * @returns {JSX.Element} JSX representation of the ShowPreview component.
- */
 function ShowPreview() {
-    const {id} = useParams();
-    const [showPreview, setShowPreview] = useState([]);
-    const [selectedSeason, setSelectedSeason] = useState(1);
-    const [audioRef, setAudioRef] = useState(null);
-    const [currentTime, setCurrentTime] = useState(0);
-    const [favorites, setFavorites] = useState([]);
+  const audioRef = useRef(null);
 
-/**
- * Fetches detailed information about the podcast show based on the provided ID.
- * @function
- * @async
- * @param {string} id - The unique identifier of the podcast show.
- * @returns {Promise<void>} A Promise that resolves after fetching and updating the showPreview state.
- */
-    useEffect(()=>{
-        try {
-            fetch(`https://podcast-api.netlify.app/id/${id}`)
-            .then(response => response.json())
-            .then(data => setShowPreview(data))
-        } catch (error) {
-            console.error(error.message)
-        }
-    },[id]);
+  const { id } = useParams();
+  const [showPreview, setShowPreview] = useState([]);
+  const [selectedSeason, setSelectedSeason] = useState(1);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [favorites, setFavorites] = useState([]);
+  const [progressBarWidth, setProgressBarWidth] = useState('0%');
+  const [isPlaying, setIsPlaying] = useState(false);
 
-/**
- * Retrieves the list of episodes for the selected season.
- * @function
- * @param {number} season - The selected season.
- * @returns {Object[]} An array of episodes for the selected season.
- */    
-  const getEpisodesBySeason = season => {
+  useEffect(() => {
+    try {
+      fetch(`https://podcast-api.netlify.app/id/${id}`)
+        .then((response) => response.json())
+        .then((data) => setShowPreview(data));
+    } catch (error) {
+      console.error(error.message);
+    }
+  }, [id]);
+
+  const getEpisodesBySeason = (season) => {
     if (!showPreview.seasons) {
       return [];
     }
     const selectedSeasonData = showPreview.seasons.find(
-      seasonData => seasonData.season === season
+      (seasonData) => seasonData.season === season
     );
     return selectedSeasonData ? selectedSeasonData.episodes : [];
   };
 
-/**
- * Handles the selection of a different season.
- * @function
- * @param {number} season - The selected season.
- * @returns {void}
- */
-  const handleSeasonSelect = season => {
+  const handleSeasonSelect = (season) => {
     setSelectedSeason(season);
   };
 
-/**
- * Updates the progress bar and current time as the audio plays.
- * @function
- * @returns {void}
- */
-   const handleTimeUpdate = () => {
-    const progressBar = document.getElementById('progress-bar');
-    if (progressBar && audioRef) {
-      const progress = (audioRef.currentTime / audioRef.duration) * 100;
-      progressBar.style.width = `${progress}%`;
-        setCurrentTime(audioRef.currentTime);
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      const progress = (audioRef.current.currentTime / audioRef.current.duration) * 100;
+      setProgressBarWidth(`${progress}%`);
+      setCurrentTime(audioRef.current.currentTime);
     }
   };
-
-/**
- * Handles the play/pause functionality of the audio player.
- * @function
- * @returns {void}
- */  
   const handlePlayPause = () => {
-    if (audioRef) {
-      if (audioRef.paused) {
-        audioRef.play();
+    if (audioRef.current) {
+      if (audioRef.current.paused || audioRef.current.ended) {
+        audioRef.current.play();
       } else {
-        audioRef.pause();
+        audioRef.current.pause();
       }
     }
   };
 
-/**
- * Adds the selected episode to the list of favorites.
- * @function
- * @param {Object} episode - The selected episode.
- * @returns {void}
- */
   const handleAddToFavorites = (episode) => {
     const formattedTime = new Date().toLocaleString();
     const newFavorite = {
@@ -105,56 +64,34 @@ function ShowPreview() {
       showName: showPreview.title,
       showUpdatedDate: showPreview.updated,
       timeAdded: formattedTime,
-      isFavorite: true, // Add this property
+      isFavorite: true,
       ...episode,
     };
-  
-    // setFavorites((prevFavorites) => [...prevFavorites, newFavorite]);
-  
-    // localStorage.setItem('favorites', JSON.stringify([...favorites, newFavorite]));
-      // Retrieve existing favorites from local storage
-  const storedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
 
-  // Check if the episode key already exists in favorites
-  const existingFavoriteIndex = storedFavorites.findIndex(
-    (fav) => fav.key === newFavorite.key
-  );
+    const storedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    const existingFavoriteIndex = storedFavorites.findIndex((fav) => fav.key === newFavorite.key);
 
-  // If the episode key already exists, replace it; otherwise, add the new favorite
-  if (existingFavoriteIndex !== -1) {
-    storedFavorites[existingFavoriteIndex] = newFavorite;
-  } else {
-    storedFavorites.push(newFavorite);
-  }
+    if (existingFavoriteIndex !== -1) {
+      storedFavorites[existingFavoriteIndex] = newFavorite;
+    } else {
+      storedFavorites.push(newFavorite);
+    }
 
-  // Update local storage with the modified list of favorites
-  localStorage.setItem('favorites', JSON.stringify(storedFavorites));
-
-  // Update the state with the modified list of favorites
-  setFavorites(storedFavorites);
+    localStorage.setItem('favorites', JSON.stringify(storedFavorites));
+    setFavorites(storedFavorites);
   };
 
-  /**
-   * Formats the given time in seconds to a readable time format (MM:SS).
-   * @function
-   * @param {number} seconds - The time in seconds.
-   * @returns {string} The formatted time string.
-   */
-  const formatTime = seconds => {
+  const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
-    const formattedTime = `${String(minutes).padStart(2, '0')}:${String(
-      remainingSeconds
-    ).padStart(2, '0')}`;
-    return formattedTime;
+    return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
   };
-
-/* styling of components*/
 
   const image = {
     width: '300px',
-    margin: '10px'
-  }
+    margin: '10px',
+  };
+
   const heading = {
     display: 'flex',
     flexDirection: 'row',
@@ -162,11 +99,13 @@ function ShowPreview() {
     padding: '5px',
     borderRadius: '20px',
     backgroundColor: 'black',
-  }
+  };
+
   const preview = {
     display: 'flex',
     flexDirection: 'row',
-  }
+  };
+
   const seasonStyles = {
     width: '50%',
     paddingTop: '20px',
@@ -174,140 +113,148 @@ function ShowPreview() {
     margin: '10px',
     borderRadius: '20px',
     backgroundColor: 'black',
-  }
-  const label ={
+  };
+
+  const label = {
     padding: '5px',
     margin: '2px',
-    fontSize: 'large'
-  }
- const select = {
+    fontSize: 'large',
+  };
+
+  const select = {
     padding: '5px',
-    fontSize: 'large'
- }
+    fontSize: 'large',
+  };
+
   const episodeStyles = {
     padding: '5px',
     margin: '5px',
-  }
+  };
+
   const episodeItem = {
     margin: '5px',
     padding: '15px',
     borderRadius: '20px',
     backgroundColor: 'black',
-  }
+  };
 
   const progressBarContainer = {
     width: '100%',
     height: '10px',
     backgroundColor: '#ddd',
+  };
 
-  }
   const progressBar = {
     height: '100%',
     backgroundColor: '#4caf50',
-    width: '0%',
-  }
+    width: progressBarWidth,
+  };
 
   const favorite = {
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between'
-  }
- const favButton = {
+    justifyContent: 'space-between',
+  };
+
+  const favButton = {
     padding: '5px',
     margin: '0px',
     borderRadius: '10px',
     border: 'none',
     cursor: 'pointer',
-    fontSize: '15px'
- }
+    fontSize: '15px',
+  };
 
+  useEffect(() => {
+    // Set up audio properties when the component mounts
+    if (audioRef.current) {
+      audioRef.current.src = getEpisodesBySeason(selectedSeason)[0]?.file || ''; // Set the initial source
+      audioRef.current.onTimeUpdate = handleTimeUpdate;
+      audioRef.current.onEnded = () => {
+        setCurrentTime(0);
+        setProgressBarWidth('0%');
+      };
+    }
+  }, [selectedSeason]);
 
   return (
     <div>
-        <div style={heading}>
-            <div>
-                < img src={showPreview.image} alt="" style={image}/>
-            </div>
-            <div>
-                <h1>{showPreview.title}</h1>
-                <p>{showPreview.description}</p>
-            </div>
-
+      <div style={heading}>
+        <div>
+          <img src={showPreview.image} alt="" style={image} />
         </div>
-        <div style={preview}>
-            <div style={seasonStyles}>
-            <label style={label}>
+        <div>
+          <h1>{showPreview.title}</h1>
+          <p>{showPreview.description}</p>
+        </div>
+      </div>
+      <div style={preview}>
+        <div style={seasonStyles}>
+          <label style={label}>
             Season:
             <select
-                value={selectedSeason}
-                onChange={e => handleSeasonSelect(Number(e.target.value))}
-                style={select}
+              value={selectedSeason}
+              onChange={(e) => handleSeasonSelect(Number(e.target.value))}
+              style={select}
             >
-                {showPreview.seasons &&
-                showPreview.seasons.map(seasonData => (
-                    <option key={seasonData.season} value={seasonData.season}>
+              {showPreview.seasons &&
+                showPreview.seasons.map((seasonData) => (
+                  <option key={seasonData.season} value={seasonData.season}>
                     Season {seasonData.season}
-                    </option>
+                  </option>
                 ))}
             </select>
-            </label>
+          </label>
+        </div>
+        <div style={episodeStyles}>
+          {getEpisodesBySeason(selectedSeason).map((episode) => (
+            <div key={uuidv4()} style={episodeItem}>
+              <div style={favorite}>
+                <h3>
+                  Episode {episode.episode}: {episode.title}
+                </h3>
+                <button
+                  style={{
+                    ...favButton,
+                    backgroundColor: episode.isFavorite ? 'red' : 'initial',
+                  }}
+                  onClick={() => handleAddToFavorites(episode)}
+                >
+                  {episode.isFavorite ? 'Added to Favorites' : 'Add to Favorites'}
+                </button>
+              </div>
+              <p>{episode.description}</p>
+              {episode.file && (
+                <audio
+                  ref={audioRef}
+                  src={episode.file}
+                  onTimeUpdate={handleTimeUpdate}
+                  onEnded={() => {
+                    setCurrentTime(0);
+                    setProgressBarWidth('0%');
+                    setIsPlaying(false);
+                  }}
+                ></audio>
+              )}
+              <div>
+                <button onClick={() => handlePlayPause()}>
+                  {isPlaying ? 'Pause' : 'Play'}
+                </button>
+                <div style={progressBarContainer}>
+                  <div style={progressBar}></div>
+                </div>
+                <p>
+                  {audioRef.current
+                    ? `Current: ${formatTime(currentTime)} / Duration: ${audioRef.current.duration && formatTime(audioRef.current.duration)}`
+                    : ''}
+                </p>
+              </div>
             </div>
-            <div style={episodeStyles}>
-                {getEpisodesBySeason(selectedSeason).map(episode => (
-                 <div key={uuidv4()} style={episodeItem}>
-                    <div style={favorite}>
-                    <h3>Episode {episode.episode}: {episode.title}</h3>
-                    {/* <button
-                    style={favButton}
-                    onClick={() => handleAddToFavorites(episode)}
-                    >
-                    Add To Favorites
-                    </button> */}
-                    <button
-                      style={{
-                        ...favButton,
-                        backgroundColor: episode.isFavorite ? 'red' : 'initial',
-                      }}
-                      onClick={() => handleAddToFavorites(episode)}
-                    >
-                      {episode.isFavorite ? 'Added to Favorites' : 'Add to Favorites'}
-                    </button>
-                    </div>
-                 <p>{episode.description}</p>
-                 {/* <audio
-                    ref={ref => setAudioRef(ref)}
-                    src={episode.file}
-                    onTimeUpdate={handleTimeUpdate}
-                    onEnded={() => {
-                        setCurrentTime(0);
-                        const progressBar = document.getElementById('progress-bar');
-                        if (progressBar) {
-                        progressBar.style.width = '0%';
-                        }
-                    }}
-                    ></audio> */}
-                 <div>
-                   <button onClick={() => handlePlayPause()}>
-                     {audioRef && !audioRef.paused ? 'Pause' : 'Play'}
-                   </button>
-                   <div style={progressBarContainer}>
-                     <div style={progressBar}></div>
-                   </div>
-                   <p>
-                    {audioRef
-                        ? `Current: ${formatTime(currentTime)} / Duration: ${formatTime(
-                            audioRef.duration
-                        )}`
-                        : ''}
-                    </p>
-                 </div>
-               </div>
-                ))}
-            </div>
-            </div>
-            </div>
-     
+          ))}
+        </div>
+      </div>
+    </div>
   );
-    
 }
+
 export default Loading(ShowPreview);
